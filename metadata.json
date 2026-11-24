@@ -1,0 +1,6 @@
+{
+  "name": "KrishiBondhu",
+  "description": "KrishiBondhu — Crop Disease Guidance and Weather Advisory Prototype for Bangladeshi Farmers (UN SDG 2.4).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
