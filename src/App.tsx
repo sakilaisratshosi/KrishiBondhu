@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   DEFAULT_FARMER_PROFILE,
   DISEASE_PROFILES,
@@ -45,6 +45,43 @@ import {
 
 const PROFILE_STORAGE_KEY = 'krishibondhu_farmer_profile_v1';
 const THEME_STORAGE_KEY = 'krishibondhu_theme_v1';
+
+const VALID_ROUTES: readonly PageRoute[] = [
+  'home',
+  'dashboard',
+  'detect',
+  'result',
+  'weather',
+  'assistant',
+  'calendar',
+  'risk',
+  'finance',
+  'community',
+  'history',
+  'sdg',
+  'roadmap',
+  'financial-model',
+  'fair-price',
+  'profile',
+  'cultivation',
+  'soil',
+];
+
+function parseHashRoute(hash: string): { route: PageRoute; subTarget?: string } {
+  const cleaned = hash.replace(/^#\/?/, '').trim();
+  if (!cleaned) return { route: 'home' };
+  const [rawRoute, rawSub] = cleaned.split('#');
+  const candidate = rawRoute.split('?')[0] as PageRoute;
+  if (VALID_ROUTES.includes(candidate)) {
+    return { route: candidate, subTarget: rawSub };
+  }
+  return { route: 'home' };
+}
+
+function buildHashForRoute(route: PageRoute, subTarget?: string): string {
+  const base = route === 'home' ? '#/' : `#/${route}`;
+  return subTarget ? `${base}#${subTarget}` : base;
+}
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -95,7 +132,10 @@ export default function App() {
   const [language, setLanguage] = useState<Language>(
     () => farmerProfile?.preferredLanguage || 'bn'
   );
-  const [activePage, setActivePage] = useState<PageRoute>('home');
+  const [activePage, setActivePage] = useState<PageRoute>(
+    () => parseHashRoute(window.location.hash).route
+  );
+  const [navHistory, setNavHistory] = useState<PageRoute[]>([]);
   const [locations, setLocations] = useState<DistrictWeather[]>(DISTRICT_WEATHER);
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>(
     () => farmerProfile?.districtId || 'bogura'
@@ -103,6 +143,9 @@ export default function App() {
   const [profileSectionTarget, setProfileSectionTarget] =
     useState<ProfileSectionTarget>('overview');
   const [profileSectionNonce, setProfileSectionNonce] = useState<number>(0);
+  const [calendarJournalNonce, setCalendarJournalNonce] = useState<number>(() =>
+    parseHashRoute(window.location.hash).subTarget === 'farming-journal' ? 1 : 0
+  );
   const [logoutBannerVisible, setLogoutBannerVisible] = useState<boolean>(false);
 
   const [customCropRequests, setCustomCropRequests] = useState<
@@ -111,6 +154,74 @@ export default function App() {
   const [selectedSoilCropId, setSelectedSoilCropId] = useState<string>('rice');
   const [selectedCultivationCropId, setSelectedCultivationCropId] =
     useState<string>('rice');
+
+  const skipScrollTopRef = useRef<boolean>(false);
+
+  const navigateTo = useCallback(
+    (
+      nextPage: PageRoute,
+      options?: {
+        fromHistory?: boolean;
+        subTarget?: string;
+        skipScrollTop?: boolean;
+      }
+    ) => {
+      if (options?.skipScrollTop) {
+        skipScrollTopRef.current = true;
+      }
+
+      setActivePage((currentPage) => {
+        if (currentPage !== nextPage && !options?.fromHistory) {
+          setNavHistory((prev) => [...prev.slice(-19), currentPage]);
+        }
+        return nextPage;
+      });
+
+      const targetHash = buildHashForRoute(nextPage, options?.subTarget);
+      if (window.location.hash !== targetHash) {
+        try {
+          window.history.pushState({ page: nextPage }, '', targetHash);
+        } catch {
+          window.location.hash = targetHash;
+        }
+      }
+    },
+    []
+  );
+
+  const handleGoBack = useCallback(
+    (fallbackRoute: PageRoute = 'home') => {
+      if (navHistory.length > 0) {
+        const previous = navHistory[navHistory.length - 1];
+        setNavHistory((prev) => prev.slice(0, -1));
+        navigateTo(previous, { fromHistory: true });
+      } else {
+        navigateTo(fallbackRoute, { fromHistory: true });
+      }
+    },
+    [navHistory, navigateTo]
+  );
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      const parsed = parseHashRoute(window.location.hash);
+      setActivePage(parsed.route);
+      if (
+        parsed.route === 'calendar' &&
+        parsed.subTarget === 'farming-journal'
+      ) {
+        skipScrollTopRef.current = true;
+        setCalendarJournalNonce((n) => n + 1);
+      }
+    };
+
+    window.addEventListener('hashchange', syncFromHash);
+    window.addEventListener('popstate', syncFromHash);
+    return () => {
+      window.removeEventListener('hashchange', syncFromHash);
+      window.removeEventListener('popstate', syncFromHash);
+    };
+  }, []);
 
   const allLibraryCrops = useMemo(
     () => [
@@ -172,6 +283,10 @@ export default function App() {
   }, [language]);
 
   useEffect(() => {
+    if (skipScrollTopRef.current) {
+      skipScrollTopRef.current = false;
+      return;
+    }
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [activePage]);
 
@@ -190,7 +305,17 @@ export default function App() {
   const handleOpenProfileSection = (section: ProfileSectionTarget) => {
     setProfileSectionTarget(section);
     setProfileSectionNonce((n) => n + 1);
-    setActivePage('profile');
+    const hasSubScroll =
+      section === 'farming' || section === 'locations' || section === 'language';
+    navigateTo('profile', { skipScrollTop: hasSubScroll });
+  };
+
+  const handleOpenFarmingJournal = () => {
+    setCalendarJournalNonce((n) => n + 1);
+    navigateTo('calendar', {
+      subTarget: 'farming-journal',
+      skipScrollTop: true,
+    });
   };
 
   const handleDemoLogout = () => {
@@ -198,7 +323,7 @@ export default function App() {
     setLogoutBannerVisible(true);
     setProfileSectionTarget('overview');
     setProfileSectionNonce((n) => n + 1);
-    setActivePage('profile');
+    navigateTo('profile');
   };
 
   const handleAddCustomCrop = (
@@ -226,12 +351,12 @@ export default function App() {
 
   const handleOpenSoilForCrop = (cropId: string) => {
     setSelectedSoilCropId(cropId);
-    setActivePage('soil');
+    navigateTo('soil');
   };
 
   const handleOpenCultivationForCrop = (cropId: string) => {
     setSelectedCultivationCropId(cropId);
-    setActivePage('cultivation');
+    navigateTo('cultivation');
   };
 
   const handleCompleteAnalysis = (diagnosis: ActiveDiagnosis) => {
@@ -264,7 +389,7 @@ export default function App() {
     };
 
     setHistory((prev) => [newRecord, ...prev]);
-    setActivePage('result');
+    navigateTo('result');
   };
 
   const handleAddLocation = (newLoc: DistrictWeather) => {
@@ -282,7 +407,7 @@ export default function App() {
       analyzedAt: record.date,
       districtId: record.districtId,
     });
-    setActivePage('result');
+    navigateTo('result');
   };
 
   const renderWorkspacePage = () => {
@@ -292,7 +417,8 @@ export default function App() {
           <FarmerDashboard
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
+            onOpenJournal={handleOpenFarmingJournal}
             locations={locations}
             selectedDistrictId={selectedDistrictId}
             onSelectDistrict={setSelectedDistrictId}
@@ -309,7 +435,7 @@ export default function App() {
           <DiseaseDetection
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
             selectedDistrictId={selectedDistrictId}
             onCompleteAnalysis={handleCompleteAnalysis}
           />
@@ -319,7 +445,7 @@ export default function App() {
           <DiseaseResult
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
             diagnosis={activeDiagnosis}
           />
         );
@@ -328,7 +454,7 @@ export default function App() {
           <WeatherAdvisory
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
             locations={locations}
             selectedDistrictId={selectedDistrictId}
             onSelectDistrict={setSelectedDistrictId}
@@ -340,7 +466,7 @@ export default function App() {
           <FarmingAssistant
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
           />
         );
       case 'calendar':
@@ -348,8 +474,9 @@ export default function App() {
           <CropCalendar
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
             allCrops={allLibraryCrops}
+            journalFocusNonce={calendarJournalNonce}
           />
         );
       case 'risk':
@@ -357,7 +484,7 @@ export default function App() {
           <DiseaseRiskPrediction
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
           />
         );
       case 'finance':
@@ -365,7 +492,7 @@ export default function App() {
           <ExpenseTracker
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
           />
         );
       case 'community':
@@ -373,7 +500,7 @@ export default function App() {
           <FarmerCommunity
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
             farmerProfile={farmerProfile}
           />
         );
@@ -382,7 +509,7 @@ export default function App() {
           <DiseaseHistory
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
             history={history}
             onOpenHistoryRecord={handleOpenHistoryRecord}
           />
@@ -392,7 +519,7 @@ export default function App() {
           <SdgImpactPage
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
           />
         );
       case 'roadmap':
@@ -400,7 +527,7 @@ export default function App() {
           <ScalabilityRoadmapPage
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
           />
         );
       case 'financial-model':
@@ -408,7 +535,7 @@ export default function App() {
           <FinancialModelPage
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
           />
         );
       case 'fair-price':
@@ -416,7 +543,7 @@ export default function App() {
           <FarmerIncomeFairPricePage
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
             allCrops={allLibraryCrops}
           />
         );
@@ -425,7 +552,7 @@ export default function App() {
           <MyProfilePage
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
             farmerProfile={farmerProfile}
             onSaveProfile={persistProfile}
             onClearProfile={() => persistProfile(null)}
@@ -443,7 +570,7 @@ export default function App() {
           <CropCultivationGuide
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
             allCrops={allLibraryCrops}
             customRequests={customCropRequests}
             onAddCustomCrop={handleAddCustomCrop}
@@ -457,7 +584,7 @@ export default function App() {
           <SoilIrrigationCare
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
             allCrops={allLibraryCrops}
             selectedCropId={selectedSoilCropId}
             onSelectCropId={setSelectedSoilCropId}
@@ -472,7 +599,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-[var(--kb-canvas)] text-[var(--kb-ink)] overflow-x-hidden transition-colors duration-150">
       <Navbar
         activePage={activePage}
-        onNavigate={setActivePage}
+        onNavigate={navigateTo}
         language={language}
         onToggleLanguage={setLanguage}
         theme={theme}
@@ -508,12 +635,14 @@ export default function App() {
           <LandingPage
             language={language}
             onToggleLanguage={setLanguage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
           />
         ) : (
           <WorkspaceShell
             activePage={activePage}
-            onNavigate={setActivePage}
+            onNavigate={navigateTo}
+            onGoBack={handleGoBack}
+            canGoBack={navHistory.length > 0}
             language={language}
             onToggleLanguage={setLanguage}
           >
@@ -525,7 +654,7 @@ export default function App() {
       <Footer
         language={language}
         onToggleLanguage={setLanguage}
-        onNavigate={setActivePage}
+        onNavigate={navigateTo}
       />
     </div>
   );

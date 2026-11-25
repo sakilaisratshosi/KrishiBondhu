@@ -15,6 +15,7 @@ import {
   Layers,
   MapPin,
   MessageSquare,
+  Scale,
   ScanSearch,
   Sprout,
   Square,
@@ -59,6 +60,7 @@ interface FarmerDashboardProps {
   onOpenHistoryRecord: (record: HistoryRecord) => void;
   allCrops?: CropCultivationGuide[];
   onOpenCultivationForCrop?: (cropId: string) => void;
+  onOpenJournal?: () => void;
 }
 
 function getClosestWeatherModel(
@@ -109,6 +111,7 @@ export function FarmerDashboard({
   onOpenHistoryRecord,
   allCrops = CROP_CULTIVATION_GUIDES,
   onOpenCultivationForCrop,
+  onOpenJournal,
 }: FarmerDashboardProps) {
   const bn = language === 'bn';
   const [editingProfile, setEditingProfile] = useState(false);
@@ -562,7 +565,9 @@ export function FarmerDashboard({
               </button>
               <button
                 type="button"
-                onClick={() => onNavigate('calendar')}
+                onClick={() =>
+                  onOpenJournal ? onOpenJournal() : onNavigate('calendar')
+                }
                 className="font-semibold text-[var(--kb-accent)] hover:text-[var(--kb-brand-text)] cursor-pointer"
               >
                 {bn ? 'ডায়েরি →' : 'Journal →'}
@@ -603,11 +608,11 @@ export function FarmerDashboard({
           </button>
         </div>
 
-        {/* 9-Module Quick Access Strip */}
+        {/* 10-Module Quick Access Strip */}
         <div className="bg-[var(--kb-surface)] border border-[var(--kb-border)] rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-[var(--kb-ink)]">
-              {bn ? '৯টি ডেমো মডিউলে দ্রুত প্রবেশ' : 'Quick Launch — All 9 Demo Modules'}
+              {bn ? '১০টি ডেমো মডিউলে দ্রুত প্রবেশ' : 'Quick Launch — All 10 Demo Modules'}
             </h2>
             <span className="text-xs text-[var(--kb-ink-muted)]">
               {bn ? 'নমুনা প্রোটোটাইপ' : 'Interactive Demo'}
@@ -623,6 +628,7 @@ export function FarmerDashboard({
               { route: 'calendar' as PageRoute, icon: CalendarDays, bn: 'ক্যালেন্ডার ও ডায়েরি', en: 'Calendar & Journal' },
               { route: 'risk' as PageRoute, icon: Activity, bn: 'ঝুঁকি পূর্বাভাস', en: 'Risk Check' },
               { route: 'finance' as PageRoute, icon: Calculator, bn: 'খরচ ও লাভ', en: 'Expenses' },
+              { route: 'fair-price' as PageRoute, icon: Scale, bn: 'আয় ও ন্যায্যমূল্য', en: 'Fair Price' },
               { route: 'community' as PageRoute, icon: Users, bn: 'কমিউনিটি', en: 'Community' },
             ].map((mod) => {
               const Icon = mod.icon;
@@ -832,7 +838,9 @@ export function FarmerDashboard({
               </p>
               <button
                 type="button"
-                onClick={() => onNavigate('calendar')}
+                onClick={() =>
+                  onOpenJournal ? onOpenJournal() : onNavigate('calendar')
+                }
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--kb-brand-text)] hover:text-[var(--kb-accent)] cursor-pointer"
               >
                 <span>{bn ? 'কৃষি ডায়েরি খুলুন' : 'Open Farming Journal'}</span>

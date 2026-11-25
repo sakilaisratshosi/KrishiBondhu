@@ -54,6 +54,7 @@ export function Navbar({
   const bn = language === 'bn';
 
   const primaryNavItems: { route: PageRoute; bn: string; en: string }[] = [
+    { route: 'home', bn: 'হোম', en: 'Home' },
     { route: 'dashboard', bn: 'ড্যাশবোর্ড', en: 'Dashboard' },
     { route: 'detect', bn: 'ক্রপ ডক্টর', en: 'Crop Doctor' },
     { route: 'cultivation', bn: 'চাষাবাদ', en: 'Cultivation' },
@@ -166,7 +167,7 @@ export function Navbar({
         {/* Zone 2: Main Navigation Links + More Tools Dropdown */}
         <nav
           aria-label={bn ? 'প্রধান নেভিগেশন' : 'Primary Navigation'}
-          className="hidden xl:flex items-center gap-3.5 2xl:gap-5 text-[13px] font-medium text-[var(--kb-ink-muted)]"
+          className="hidden xl:flex items-center gap-2.5 2xl:gap-4 text-[12.5px] 2xl:text-[13px] font-medium text-[var(--kb-ink-muted)]"
         >
           {primaryNavItems.map((item) => {
             const isActive =

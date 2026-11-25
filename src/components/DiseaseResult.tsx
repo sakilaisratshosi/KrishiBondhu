@@ -42,12 +42,32 @@ export function DiseaseResult({
           .join(' | ')}\nVerify with your Upazila Agriculture Officer or call 16123.`;
 
     try {
-      await navigator.clipboard.writeText(summaryText);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2200);
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(summaryText);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2200);
+        return;
+      }
     } catch {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2200);
+      // Fall back to execCommand below inside restricted iFrames
+    }
+
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = summaryText;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const succeeded = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      if (succeeded) {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2200);
+      }
+    } catch {
+      // Ignore if environment completely blocks clipboard access
     }
   };
 

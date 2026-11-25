@@ -13,6 +13,7 @@ import {
 import { ASSETS } from '../data/krishiData';
 import { BilingualText, Language, PageRoute } from '../types/krishi';
 import { ResilientImage } from './ResilientImage';
+import { SdgTopicId, SdgTopicModal } from './SdgTopicModal';
 import { SourceQualityNotice } from './SourceQualityNotice';
 import { WorkspaceHeader } from './WorkspaceHeader';
 
@@ -157,13 +158,20 @@ export function SdgImpactPage({
   const bn = language === 'bn';
   const [activePathwayId, setActivePathwayId] =
     useState<ContributionPathway['id']>('knowledge');
+  const [activeSdgTopic, setActiveSdgTopic] = useState<SdgTopicId | null>(null);
 
   const activePathway =
     INTENDED_PATHWAYS.find((p) => p.id === activePathwayId) ||
     INTENDED_PATHWAYS[0];
   const ActiveIcon = activePathway.icon;
 
-  const pillars = [
+  const pillars: {
+    index: string;
+    icon: typeof Sprout;
+    title: string;
+    body: string;
+    topicId?: SdgTopicId;
+  }[] = [
     {
       index: '01',
       icon: Sprout,
@@ -189,6 +197,7 @@ export function SdgImpactPage({
       body: bn
         ? 'ধানের ব্লাস্ট বা আলুর মড়কের মতো রোগের প্রাথমিক লক্ষণ সহজে বুঝতে ও সময়মতো উপজেলা কৃষি অফিস এবং ১৬১২৩ নম্বরের সহায়তা নিতে উৎসাহিত করে।'
         : 'Encourages earlier recognition of leaf symptoms and prompt verification with Upazila agricultural extension officers.',
+      topicId: 'crop-loss',
     },
     {
       index: '04',
@@ -199,6 +208,7 @@ export function SdgImpactPage({
       body: bn
         ? 'বৃষ্টির আগে অযথা স্প্রে বন্ধ রাখা এবং অতিরিক্ত ইউরিয়া এড়িয়ে চলার পরামর্শ দিয়ে পানি, মাটি ও উৎপাদন ব্যয় রক্ষায় সচেতনতা তৈরি করে।'
         : 'Discourages pre-rain spraying and excess nitrogen use—intended to reduce runoff waste and protect soil quality.',
+      topicId: 'resource-use',
     },
   ];
 
@@ -436,6 +446,38 @@ export function SdgImpactPage({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {pillars.map((pillar) => {
             const Icon = pillar.icon;
+            if (pillar.topicId) {
+              const targetTopic = pillar.topicId;
+              return (
+                <button
+                  key={pillar.index}
+                  type="button"
+                  onClick={() => setActiveSdgTopic(targetTopic)}
+                  className="group text-left bg-[var(--kb-surface)] hover:bg-[var(--kb-surface-sage)]/55 border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 sm:p-8 flex flex-col justify-between gap-4 cursor-pointer"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-semibold text-[var(--kb-accent)] tabular-nums">
+                        {pillar.index}.
+                      </span>
+                      <Icon className="w-5 h-5 text-[var(--kb-brand-text)]" />
+                    </div>
+                    <h3 className="text-xl font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
+                      {pillar.title}
+                    </h3>
+                    <p className="text-sm sm:text-base text-[var(--kb-ink-muted)] leading-relaxed">
+                      {pillar.body}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)]">
+                    <span>
+                      {bn ? 'বিস্তারিত নির্দেশিকা খুলুন' : 'Open Detailed Guide'}
+                    </span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </span>
+                </button>
+              );
+            }
             return (
               <div
                 key={pillar.index}
@@ -512,6 +554,13 @@ export function SdgImpactPage({
           }}
         />
       </div>
+
+      <SdgTopicModal
+        topic={activeSdgTopic}
+        language={language}
+        onClose={() => setActiveSdgTopic(null)}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }

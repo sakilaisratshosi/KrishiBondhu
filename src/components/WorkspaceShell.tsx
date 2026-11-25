@@ -1,11 +1,13 @@
 import { ReactNode } from 'react';
 import {
   Activity,
+  ArrowLeft,
   BookOpen,
   Calculator,
   CalendarDays,
   CloudSun,
   History,
+  Home,
   Layers,
   LayoutDashboard,
   MessageSquare,
@@ -23,6 +25,8 @@ import { Language, PageRoute } from '../types/krishi';
 interface WorkspaceShellProps {
   activePage: PageRoute;
   onNavigate: (page: PageRoute) => void;
+  onGoBack?: (fallback?: PageRoute) => void;
+  canGoBack?: boolean;
   language: Language;
   onToggleLanguage: (lang: Language) => void;
   children: ReactNode;
@@ -31,6 +35,8 @@ interface WorkspaceShellProps {
 export function WorkspaceShell({
   activePage,
   onNavigate,
+  onGoBack,
+  canGoBack = false,
   language,
   onToggleLanguage,
   children,
@@ -50,6 +56,12 @@ export function WorkspaceShell({
     {
       groupLabel: { bn: 'সারসংক্ষেপ', en: 'Overview' },
       items: [
+        {
+          route: 'home',
+          bn: 'হোম পেজ',
+          en: 'Home Page',
+          icon: Home,
+        },
         {
           route: 'dashboard',
           bn: 'কৃষক ড্যাশবোর্ড',
@@ -168,6 +180,16 @@ export function WorkspaceShell({
       {/* Mobile / Tablet Quick Module Strip (< lg) */}
       <div className="lg:hidden bg-[var(--kb-surface)] border-b border-[var(--kb-border)] px-4 py-2.5 overflow-x-auto">
         <div className="flex items-center gap-2 min-w-max">
+          {onGoBack && (
+            <button
+              type="button"
+              onClick={() => onGoBack('home')}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 cursor-pointer bg-[var(--kb-surface-sage)] text-[var(--kb-brand-text)] border-[var(--kb-border)] hover:border-[var(--kb-accent)]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>{bn ? (canGoBack ? 'পিছনে' : 'হোম') : canGoBack ? 'Back' : 'Home'}</span>
+            </button>
+          )}
           {allFlatItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.matchRoutes

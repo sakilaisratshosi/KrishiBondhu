@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Activity,
@@ -9,15 +10,18 @@ import {
   Droplets,
   History,
   MessageSquare,
+  Scale,
   ScanSearch,
   ShieldCheck,
   Sprout,
+  User,
   Users,
 } from 'lucide-react';
 import { CROP_CULTIVATION_GUIDES } from '../data/cropCultivationData';
 import { ASSETS } from '../data/krishiData';
 import { Language, PageRoute } from '../types/krishi';
 import { ResilientImage } from './ResilientImage';
+import { SdgTopicId, SdgTopicModal } from './SdgTopicModal';
 
 interface LandingPageProps {
   language: Language;
@@ -31,14 +35,21 @@ export function LandingPage({
   onNavigate,
 }: LandingPageProps) {
   const bn = language === 'bn';
+  const [activeSdgTopic, setActiveSdgTopic] = useState<SdgTopicId | null>(null);
 
-  const summaryStrip = [
+  const summaryStrip: {
+    number: string;
+    title: string;
+    detail: string;
+    route: PageRoute;
+  }[] = [
     {
       number: '০১',
       title: bn ? 'বাংলা-প্রথম ইন্টারফেস' : 'Bangla-First Clarity',
       detail: bn
         ? 'সহজ বাংলা ও ইংরেজি সুইচসহ কৃষকবান্ধব নকশা'
         : 'Natural Bangla & English switch tailored for local growers',
+      route: 'dashboard',
     },
     {
       number: '০২',
@@ -46,6 +57,7 @@ export function LandingPage({
       detail: bn
         ? 'ধান, আলু, টমেটো ও বেগুনের লক্ষণভিত্তিক ডেমো'
         : 'Structured demo profiles for Rice, Potato, Tomato & Eggplant',
+      route: 'detect',
     },
     {
       number: '০৩',
@@ -53,6 +65,7 @@ export function LandingPage({
       detail: bn
         ? '৫টি কৃষি অঞ্চলের নমুনা পূর্বাভাস ও সেচ-স্প্রে পরামর্শ'
         : 'Sample forecasts and spray timing across 5 regions',
+      route: 'weather',
     },
     {
       number: '০৪',
@@ -60,6 +73,7 @@ export function LandingPage({
       detail: bn
         ? 'টেকসই খাদ্য উৎপাদন ও জলবায়ু সহনশীল কৃষি চর্চা'
         : 'Supporting resilient farming & reduced crop loss',
+      route: 'sdg',
     },
   ];
 
@@ -241,19 +255,27 @@ export function LandingPage({
           </motion.div>
 
           {/* 4-Column Summary Strip Below Hero Split */}
-          <div className="mt-10 pt-8 border-t border-[var(--kb-border)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="mt-10 pt-8 border-t border-[var(--kb-border)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {summaryStrip.map((item) => (
-              <div key={item.number} className="space-y-1.5">
-                <span className="font-mono text-xs font-semibold text-[var(--kb-accent)] tabular-nums">
-                  {item.number}.
-                </span>
-                <h2 className="text-base font-bold text-[var(--kb-ink)]">
+              <button
+                key={item.number}
+                type="button"
+                onClick={() => onNavigate(item.route)}
+                className="group text-left rounded-xl p-3.5 border border-transparent hover:border-[var(--kb-border)] hover:bg-[var(--kb-surface-sage)]/55 transition-colors space-y-1.5 cursor-pointer"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-semibold text-[var(--kb-accent)] tabular-nums">
+                    {item.number}.
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[var(--kb-ink-muted)] group-hover:text-[var(--kb-accent)] group-hover:translate-x-0.5 transition-all" />
+                </div>
+                <h2 className="text-base font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                   {item.title}
                 </h2>
                 <p className="text-sm text-[var(--kb-ink-muted)] leading-relaxed">
                   {item.detail}
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -282,30 +304,28 @@ export function LandingPage({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
             {workflowSteps.map((item) => (
-              <div
+              <button
                 key={item.step}
-                className="bg-[var(--kb-surface)] border border-[var(--kb-border)] rounded-xl p-5 flex flex-col justify-between gap-4"
+                type="button"
+                onClick={() => onNavigate(item.route)}
+                className="group text-left bg-[var(--kb-surface)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-5 flex flex-col justify-between gap-4 cursor-pointer"
               >
                 <div className="space-y-2">
                   <span className="font-mono text-xs font-semibold text-[var(--kb-accent)] tabular-nums">
                     {bn ? `ধাপ ${item.step}` : `Step ${item.step}`}
                   </span>
-                  <h3 className="text-base font-bold text-[var(--kb-ink)]">
+                  <h3 className="text-base font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                     {item.title}
                   </h3>
                   <p className="text-sm text-[var(--kb-ink-muted)] leading-relaxed">
                     {item.detail}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onNavigate(item.route)}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] hover:text-[var(--kb-accent)] transition-colors self-start cursor-pointer"
-                >
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] transition-colors self-start">
                   <span>{item.cta}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </span>
+              </button>
             ))}
           </div>
         </div>
@@ -445,7 +465,11 @@ export function LandingPage({
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Marquee Feature 1: Crop Disease Detection (Span 2) */}
-            <div className="lg:col-span-2 bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl overflow-hidden grid grid-cols-1 md:grid-cols-12">
+            <button
+              type="button"
+              onClick={() => onNavigate('detect')}
+              className="group text-left lg:col-span-2 bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl overflow-hidden grid grid-cols-1 md:grid-cols-12 cursor-pointer"
+            >
               <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between gap-6">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-xs font-medium text-[var(--kb-ink-muted)]">
@@ -453,7 +477,7 @@ export function LandingPage({
                     <span aria-hidden="true">·</span>
                     <span>{bn ? 'নমুনা ডেমো' : 'Sample Demo'}</span>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-[var(--kb-ink)]">
+                  <h3 className="text-xl sm:text-2xl font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                     {bn
                       ? 'ফসলের রোগ শনাক্তকরণ ও দায়িত্বশীল পরামর্শ'
                       : 'Crop Disease Inspection & Care Guide'}
@@ -465,14 +489,10 @@ export function LandingPage({
                   </p>
                 </div>
                 <div>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('detect')}
-                    className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2.5 text-sm font-semibold text-white bg-[var(--kb-brand)] hover:bg-[var(--kb-brand-hover)] rounded-lg transition-colors whitespace-nowrap cursor-pointer"
-                  >
+                  <span className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2.5 text-sm font-semibold text-white bg-[var(--kb-brand)] group-hover:bg-[var(--kb-brand-hover)] rounded-lg transition-colors whitespace-nowrap">
                     <ScanSearch className="w-4 h-4" />
                     <span>{bn ? 'রোগ শনাক্ত পেজে যান' : 'Try Crop Doctor'}</span>
-                  </button>
+                  </span>
                 </div>
               </div>
               <div className="md:col-span-5 min-h-[220px] border-t md:border-t-0 md:border-l border-[var(--kb-border)]">
@@ -482,17 +502,21 @@ export function LandingPage({
                   className="w-full h-full object-cover"
                 />
               </div>
-            </div>
+            </button>
 
             {/* Feature 2: Weather Advisory */}
-            <div className="bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 sm:p-8 flex flex-col justify-between gap-6">
+            <button
+              type="button"
+              onClick={() => onNavigate('weather')}
+              className="group text-left bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 sm:p-8 flex flex-col justify-between gap-6 cursor-pointer"
+            >
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-xs font-medium text-[var(--kb-ink-muted)]">
                   <span>{bn ? 'ফিচার ০২' : 'Feature 02'}</span>
                   <span aria-hidden="true">·</span>
                   <span>{bn ? '৫টি জেলা' : '5 Districts'}</span>
                 </div>
-                <h3 className="text-xl font-bold text-[var(--kb-ink)]">
+                <h3 className="text-xl font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                   {bn
                     ? 'আবহাওয়াভিত্তিক কৃষি সতর্কতা'
                     : 'Weather-Timed Field Advisory'}
@@ -503,30 +527,30 @@ export function LandingPage({
                     : 'Review sample temperature, rainfall, and humidity outlooks paired with clear spraying and drainage guidance.'}
                 </p>
               </div>
-              <div className="pt-4 border-t border-[var(--kb-border)] flex items-center justify-between gap-2">
+              <div className="w-full pt-4 border-t border-[var(--kb-border)] flex items-center justify-between gap-2">
                 <span className="font-mono text-xs text-[var(--kb-ink-muted)] tabular-nums">
                   {bn ? 'নমুনা পূর্বাভাস: ৫ দিন' : 'Sample Forecast: 5 Days'}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('weather')}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] hover:text-[var(--kb-accent)] transition-colors whitespace-nowrap cursor-pointer"
-                >
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] transition-colors whitespace-nowrap">
                   <span>{bn ? 'আবহাওয়া দেখুন' : 'View Weather'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </span>
               </div>
-            </div>
+            </button>
 
             {/* Feature 3: Bangla Farming Assistant */}
-            <div className="bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 sm:p-8 flex flex-col justify-between gap-6">
+            <button
+              type="button"
+              onClick={() => onNavigate('assistant')}
+              className="group text-left bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 sm:p-8 flex flex-col justify-between gap-6 cursor-pointer"
+            >
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-xs font-medium text-[var(--kb-ink-muted)]">
                   <span>{bn ? 'ফিচার ০৩' : 'Feature 03'}</span>
                   <span aria-hidden="true">·</span>
                   <span>{bn ? 'অফলাইন ডেমো' : 'Local Demo'}</span>
                 </div>
-                <h3 className="text-xl font-bold text-[var(--kb-ink)]">
+                <h3 className="text-xl font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                   {bn
                     ? 'বাংলা কৃষি সহায়ক চ্যাট'
                     : 'Bangla Farming Assistant'}
@@ -537,24 +561,24 @@ export function LandingPage({
                     : 'Explore a responsive local chat experience with suggested Bangladeshi crop questions and safe guidance.'}
                 </p>
               </div>
-              <div className="pt-4 border-t border-[var(--kb-border)] flex items-center justify-between gap-2">
+              <div className="w-full pt-4 border-t border-[var(--kb-border)] flex items-center justify-between gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs text-[var(--kb-ink-muted)]">
                   <MessageSquare className="w-3.5 h-3.5 text-[var(--kb-brand-text)]" />
                   <span>{bn ? 'বাংলা ও ইংরেজি' : 'Bangla & English'}</span>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('assistant')}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] hover:text-[var(--kb-accent)] transition-colors whitespace-nowrap cursor-pointer"
-                >
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] transition-colors whitespace-nowrap">
                   <span>{bn ? 'চ্যাট খুলুন' : 'Open Chat'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </span>
               </div>
-            </div>
+            </button>
 
             {/* Feature 4: Disease History (Span 2) */}
-            <div className="lg:col-span-2 bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl overflow-hidden grid grid-cols-1 md:grid-cols-12">
+            <button
+              type="button"
+              onClick={() => onNavigate('history')}
+              className="group text-left lg:col-span-2 bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl overflow-hidden grid grid-cols-1 md:grid-cols-12 cursor-pointer"
+            >
               <div className="md:col-span-5 min-h-[200px] border-b md:border-b-0 md:border-r border-[var(--kb-border)]">
                 <ResilientImage
                   src={ASSETS.potatoBlight}
@@ -569,7 +593,7 @@ export function LandingPage({
                     <span aria-hidden="true">·</span>
                     <span>{bn ? 'অনুসন্ধান ও ফিল্টার' : 'Search & Filter'}</span>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-[var(--kb-ink)]">
+                  <h3 className="text-xl sm:text-2xl font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                     {bn
                       ? 'পূর্ববর্তী রোগ পরীক্ষার ইতিহাস ও নথি'
                       : 'Crop Inspection History & Searchable Log'}
@@ -581,30 +605,30 @@ export function LandingPage({
                   </p>
                 </div>
                 <div>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('history')}
-                    className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2.5 text-sm font-semibold text-[var(--kb-brand-text)] bg-[var(--kb-surface)] hover:bg-[var(--kb-surface-sage)] border border-[var(--kb-border)] rounded-lg transition-colors whitespace-nowrap cursor-pointer"
-                  >
+                  <span className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2.5 text-sm font-semibold text-[var(--kb-brand-text)] bg-[var(--kb-surface)] group-hover:bg-[var(--kb-surface-sage)] border border-[var(--kb-border)] rounded-lg transition-colors whitespace-nowrap">
                     <History className="w-4 h-4" />
                     <span>{bn ? 'রোগের ইতিহাস দেখুন' : 'Browse History'}</span>
-                  </button>
+                  </span>
                 </div>
               </div>
-            </div>
+            </button>
           </div>
 
-          {/* Extended 6 Modules Grid (Modules 05-10) */}
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4">
-              <div className="space-y-2">
+          {/* Extended 8 Modules Grid (Modules 05-12) */}
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <button
+              type="button"
+              onClick={() => onNavigate('cultivation')}
+              className="group text-left bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-2 w-full">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[var(--kb-ink-muted)]">
                     {bn ? 'মডিউল ০৫' : 'Module 05'}
                   </span>
                   <BookOpen className="w-4 h-4 text-[var(--kb-brand-text)]" />
                 </div>
-                <h3 className="text-base font-bold text-[var(--kb-ink)]">
+                <h3 className="text-base font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                   {bn ? 'বাংলাদেশ ফসল জ্ঞানভাণ্ডার' : 'Bangladesh Crop Library'}
                 </h3>
                 <p className="text-sm text-[var(--kb-ink-muted)] leading-relaxed">
@@ -613,25 +637,25 @@ export function LandingPage({
                     : `${CROP_CULTIVATION_GUIDES.length} Bangladeshi crop guides across 8 categories with offline-saved access.`}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('cultivation')}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] hover:text-[var(--kb-accent)] self-start cursor-pointer"
-              >
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] self-start">
                 <span>{bn ? 'জ্ঞানভাণ্ডার খুলুন' : 'Open Crop Library'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
 
-            <div className="bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4">
-              <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => onNavigate('soil')}
+              className="group text-left bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-2 w-full">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[var(--kb-ink-muted)]">
                     {bn ? 'মডিউল ০৬' : 'Module 06'}
                   </span>
                   <Droplets className="w-4 h-4 text-[var(--kb-brand-text)]" />
                 </div>
-                <h3 className="text-base font-bold text-[var(--kb-ink)]">
+                <h3 className="text-base font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                   {bn ? 'মাটি ও সেচ ব্যবস্থাপনা' : 'Soil & Irrigation Care'}
                 </h3>
                 <p className="text-sm text-[var(--kb-ink-muted)] leading-relaxed">
@@ -640,25 +664,25 @@ export function LandingPage({
                     : 'Soil pH alignment, organic care, and moisture-aware irrigation tips.'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('soil')}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] hover:text-[var(--kb-accent)] self-start cursor-pointer"
-              >
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] self-start">
                 <span>{bn ? 'মাটি ও সেচ দেখুন' : 'Open Soil Guide'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
 
-            <div className="bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4">
-              <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => onNavigate('calendar')}
+              className="group text-left bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-2 w-full">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[var(--kb-ink-muted)]">
                     {bn ? 'মডিউল ০৭' : 'Module 07'}
                   </span>
                   <CalendarDays className="w-4 h-4 text-[var(--kb-brand-text)]" />
                 </div>
-                <h3 className="text-base font-bold text-[var(--kb-ink)]">
+                <h3 className="text-base font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                   {bn ? 'ক্যালেন্ডার ও কৃষি ডায়েরি' : 'Calendar & Farming Journal'}
                 </h3>
                 <p className="text-sm text-[var(--kb-ink-muted)] leading-relaxed">
@@ -667,25 +691,25 @@ export function LandingPage({
                     : 'Crop stage schedules, task checklists, and persistent field journal notes.'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('calendar')}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] hover:text-[var(--kb-accent)] self-start cursor-pointer"
-              >
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] self-start">
                 <span>{bn ? 'ক্যালেন্ডার ও ডায়েরি' : 'Open Calendar'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
 
-            <div className="bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4">
-              <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => onNavigate('risk')}
+              className="group text-left bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-2 w-full">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[var(--kb-ink-muted)]">
                     {bn ? 'মডিউল ০৮' : 'Module 08'}
                   </span>
                   <Activity className="w-4 h-4 text-[var(--kb-brand-text)]" />
                 </div>
-                <h3 className="text-base font-bold text-[var(--kb-ink)]">
+                <h3 className="text-base font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                   {bn ? 'রোগের ঝুঁকি পূর্বাভাস' : 'Disease Risk Predictor'}
                 </h3>
                 <p className="text-sm text-[var(--kb-ink-muted)] leading-relaxed">
@@ -694,25 +718,25 @@ export function LandingPage({
                     : 'Interactive Low, Medium, High risk simulation with factor explanations.'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('risk')}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] hover:text-[var(--kb-accent)] self-start cursor-pointer"
-              >
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] self-start">
                 <span>{bn ? 'ঝুঁকি যাচাই করুন' : 'Predict Risk'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
 
-            <div className="bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4">
-              <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => onNavigate('finance')}
+              className="group text-left bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-2 w-full">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[var(--kb-ink-muted)]">
                     {bn ? 'মডিউল ০৯' : 'Module 09'}
                   </span>
                   <Calculator className="w-4 h-4 text-[var(--kb-brand-text)]" />
                 </div>
-                <h3 className="text-base font-bold text-[var(--kb-ink)]">
+                <h3 className="text-base font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                   {bn ? 'খরচ ও লাভ হিসাব' : 'Expense & Profit Tracker'}
                 </h3>
                 <p className="text-sm text-[var(--kb-ink-muted)] leading-relaxed">
@@ -721,25 +745,52 @@ export function LandingPage({
                     : 'Track BDT expenses, monthly summaries, estimated revenue, and profit charts.'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('finance')}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] hover:text-[var(--kb-accent)] self-start cursor-pointer"
-              >
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] self-start">
                 <span>{bn ? 'হিসাব খুলুন' : 'Open Tracker'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
 
-            <div className="bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4">
-              <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => onNavigate('fair-price')}
+              className="group text-left bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-2 w-full">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[var(--kb-ink-muted)]">
                     {bn ? 'মডিউল ১০' : 'Module 10'}
                   </span>
+                  <Scale className="w-4 h-4 text-[var(--kb-brand-text)]" />
+                </div>
+                <h3 className="text-base font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
+                  {bn ? 'আয় ও ন্যায্যমূল্য ট্র্যাকার' : 'Income & Fair Price Tracker'}
+                </h3>
+                <p className="text-sm text-[var(--kb-ink-muted)] leading-relaxed">
+                  {bn
+                    ? 'ফসল বিক্রয়ের নিট আয় হিসাব এবং স্থানীয় বাজারের রেফারেন্স দরের সাথে তুলনা।'
+                    : 'Calculate net crop sale income and compare prices against local references.'}
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] self-start">
+                <span>{bn ? 'ন্যায্যমূল্য দেখুন' : 'Open Fair Price'}</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('community')}
+              className="group text-left bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-2 w-full">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-[var(--kb-ink-muted)]">
+                    {bn ? 'মডিউল ১১' : 'Module 11'}
+                  </span>
                   <Users className="w-4 h-4 text-[var(--kb-brand-text)]" />
                 </div>
-                <h3 className="text-base font-bold text-[var(--kb-ink)]">
+                <h3 className="text-base font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                   {bn ? 'কৃষক কমিউনিটি' : 'Farmer Community'}
                 </h3>
                 <p className="text-sm text-[var(--kb-ink-muted)] leading-relaxed">
@@ -748,15 +799,38 @@ export function LandingPage({
                     : 'Share demo field posts, like, comment, and view sample expert advice.'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('community')}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] hover:text-[var(--kb-accent)] self-start cursor-pointer"
-              >
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] self-start">
                 <span>{bn ? 'কমিউনিটি দেখুন' : 'Open Community'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('profile')}
+              className="group text-left bg-[var(--kb-surface-muted)] border border-[var(--kb-border)] hover:border-[var(--kb-accent)] transition-colors rounded-xl p-6 flex flex-col justify-between gap-4 cursor-pointer"
+            >
+              <div className="space-y-2 w-full">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-[var(--kb-ink-muted)]">
+                    {bn ? 'মডিউল ১২' : 'Module 12'}
+                  </span>
+                  <User className="w-4 h-4 text-[var(--kb-brand-text)]" />
+                </div>
+                <h3 className="text-base font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
+                  {bn ? 'আমার কৃষক প্রোফাইল' : 'My Farmer Profile'}
+                </h3>
+                <p className="text-sm text-[var(--kb-ink-muted)] leading-relaxed">
+                  {bn
+                    ? 'কৃষকের তথ্য, জেলা-উপজেলা, পছন্দের ফসল, জমি ও সংরক্ষিত এলাকা ব্যবস্থাপনা।'
+                    : 'Manage farmer details, district & upazila, crops, and saved farm locations.'}
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)] self-start">
+                <span>{bn ? 'প্রোফাইল খুলুন' : 'Open Profile'}</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </button>
           </div>
         </div>
       </section>
@@ -797,26 +871,47 @@ export function LandingPage({
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                <div className="p-4 bg-[var(--kb-surface-muted)] rounded-lg border border-[var(--kb-border-subtle)]">
-                  <h3 className="text-sm font-bold text-[var(--kb-ink)] mb-1">
-                    {bn ? 'প্রতিরোধযোগ্য ফসলহানি হ্রাস' : 'Reduced Preventable Loss'}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-[var(--kb-ink-muted)] leading-relaxed">
-                    {bn
-                      ? 'প্রাথমিক পর্যায়ে পাতার রোগ শনাক্ত ও দ্রুত কৃষি পরামর্শ গ্রহণ।'
-                      : 'Early symptom awareness and timely expert escalation.'}
-                  </p>
-                </div>
-                <div className="p-4 bg-[var(--kb-surface-muted)] rounded-lg border border-[var(--kb-border-subtle)]">
-                  <h3 className="text-sm font-bold text-[var(--kb-ink)] mb-1">
-                    {bn ? 'সম্পদের দায়িত্বশীল ব্যবহার' : 'Responsible Resource Use'}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-[var(--kb-ink-muted)] leading-relaxed">
-                    {bn
-                      ? 'বৃষ্টির আগে স্প্রে এড়িয়ে মাটি, পানি ও কৃষি ব্যয় সুরক্ষা।'
-                      : 'Avoiding wasteful pre-rain spraying to protect soil and water.'}
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveSdgTopic('crop-loss')}
+                  className="group text-left p-4 bg-[var(--kb-surface-muted)] hover:bg-[var(--kb-surface-sage)] rounded-xl border border-[var(--kb-border-subtle)] hover:border-[var(--kb-accent)] transition-colors flex flex-col justify-between gap-2.5 cursor-pointer"
+                >
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] mb-1 transition-colors">
+                      {bn ? 'প্রতিরোধযোগ্য ফসলহানি হ্রাস' : 'Reduced Preventable Loss'}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-[var(--kb-ink-muted)] leading-relaxed">
+                      {bn
+                        ? 'প্রাথমিক পর্যায়ে পাতার রোগ শনাক্ত ও দ্রুত কৃষি পরামর্শ গ্রহণ।'
+                        : 'Early symptom awareness and timely expert escalation.'}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)]">
+                    <span>{bn ? 'বিস্তারিত নির্দেশিকা দেখুন' : 'View Disease Prevention Guide'}</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveSdgTopic('resource-use')}
+                  className="group text-left p-4 bg-[var(--kb-surface-muted)] hover:bg-[var(--kb-surface-sage)] rounded-xl border border-[var(--kb-border-subtle)] hover:border-[var(--kb-accent)] transition-colors flex flex-col justify-between gap-2.5 cursor-pointer"
+                >
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] mb-1 transition-colors">
+                      {bn ? 'সম্পদের দায়িত্বশীল ব্যবহার' : 'Responsible Resource Use'}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-[var(--kb-ink-muted)] leading-relaxed">
+                      {bn
+                        ? 'বৃষ্টির আগে স্প্রে এড়িয়ে মাটি, পানি ও কৃষি ব্যয় সুরক্ষা।'
+                        : 'Avoiding wasteful pre-rain spraying to protect soil and water.'}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--kb-brand-text)] group-hover:text-[var(--kb-accent)]">
+                    <span>{bn ? 'সম্পদ ব্যবহারের নিয়ম দেখুন' : 'View Resource Stewardship'}</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -872,6 +967,13 @@ export function LandingPage({
           </div>
         </div>
       </section>
+
+      <SdgTopicModal
+        topic={activeSdgTopic}
+        language={language}
+        onClose={() => setActiveSdgTopic(null)}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }

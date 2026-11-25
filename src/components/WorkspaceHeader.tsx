@@ -1,4 +1,4 @@
-import { ArrowLeft, Globe } from 'lucide-react';
+import { ArrowLeft, Globe, Home } from 'lucide-react';
 import { Language, PageRoute } from '../types/krishi';
 
 interface WorkspaceHeaderProps {
@@ -22,12 +22,14 @@ export function WorkspaceHeader({
   backRoute = 'home',
   backLabel,
 }: WorkspaceHeaderProps) {
+  const bn = language === 'bn';
+
   return (
     <div className="bg-[var(--kb-surface)] border-b border-[var(--kb-border)]">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-xs font-medium text-[var(--kb-ink-muted)]">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--kb-ink-muted)]">
               <button
                 type="button"
                 onClick={() => onNavigate(backRoute)}
@@ -35,9 +37,22 @@ export function WorkspaceHeader({
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>
-                  {backLabel || (language === 'bn' ? 'হোম' : 'Home')}
+                  {backLabel || (bn ? 'হোম' : 'Home')}
                 </span>
               </button>
+              {backRoute !== 'home' && (
+                <>
+                  <span aria-hidden="true">/</span>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('home')}
+                    className="inline-flex items-center gap-1 hover:text-[var(--kb-brand-text)] transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    <Home className="w-3.5 h-3.5" />
+                    <span>{bn ? 'হোম' : 'Home'}</span>
+                  </button>
+                </>
+              )}
               <span aria-hidden="true">/</span>
               <span className="text-[var(--kb-brand-text)]">{breadcrumbLabel}</span>
             </div>

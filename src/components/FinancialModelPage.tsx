@@ -676,8 +676,8 @@ export function FinancialModelPage({
               </h2>
               <p className="text-xs sm:text-sm text-[var(--kb-ink-muted)] leading-relaxed">
                 {bn
-                  ? 'সকল কৃষকের জন্য প্রয়োজনীয় মৌলিক চাষাবাদ তথ্য ফ্রি প্ল্যানে উন্মুক্ত থাকবে। প্রস্তাবিত প্রিমিয়াম মূল্য (৳৯৯/মাস) বাজার যাচাই সাপেক্ষ—বর্তমানে কোনো প্রকৃত পেমেন্ট বা সাবস্ক্রিপশন চালু নেই।'
-                  : 'Essential farming information always remains free. All Premium pricing is proposed and subject to market validation—no real payment or active subscription billing exists.'}
+                  ? 'সকল কৃষকের জন্য প্রয়োজনীয় মৌলিক চাষাবাদ তথ্য ফ্রি প্ল্যানে উন্মুক্ত থাকবে। প্রিমিয়াম মূল্য এবং সেবাসমূহ প্রস্তাবিত এবং এখনো বাণিজ্যিকভাবে চালু করা হয়নি।'
+                  : 'Essential farming information always remains free. Premium pricing and services are proposed and not yet commercially launched.'}
               </p>
             </div>
 
@@ -847,11 +847,16 @@ export function FinancialModelPage({
             <div className="bg-[#113520] dark:bg-[#0F2C1B] text-white border border-[#1E5133] rounded-xl p-6 sm:p-8 flex flex-col justify-between gap-6">
               <div className="space-y-5">
                 <div className="space-y-1.5 pb-5 border-b border-[#1E5133]">
-                  <p className="text-xs font-semibold text-[#6EE7B7]">
-                    {bn
-                      ? 'প্রস্তাবিত প্ল্যান · বাজার যাচাই সাপেক্ষ (ডেমো প্রদর্শনী)'
-                      : 'Proposed Plan · Subject to Market Validation (Demo Only)'}
-                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-[#6EE7B7]">
+                      {bn
+                        ? 'প্রস্তাবিত প্ল্যান · বাজার যাচাই সাপেক্ষ (ডেমো প্রদর্শনী)'
+                        : 'Proposed Plan · Subject to Market Validation (Demo Only)'}
+                    </p>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#6EE7B7]/20 text-[#A7F3D0] border border-[#6EE7B7]/40">
+                      {bn ? 'সুপারিশকৃত' : 'Recommended'}
+                    </span>
+                  </div>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h3 className="text-2xl font-bold text-white">
                       {bn ? 'প্রিমিয়াম প্ল্যান' : 'PREMIUM PLAN'}

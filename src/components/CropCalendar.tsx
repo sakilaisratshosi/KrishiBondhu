@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bell,
   BookMarked,
@@ -27,6 +27,7 @@ interface CropCalendarProps {
   onToggleLanguage: (lang: Language) => void;
   onNavigate: (page: PageRoute) => void;
   allCrops?: CropCultivationGuide[];
+  journalFocusNonce?: number;
 }
 
 export type JournalEntryType =
@@ -96,10 +97,27 @@ export function CropCalendar({
   onToggleLanguage,
   onNavigate,
   allCrops = CROP_CULTIVATION_GUIDES,
+  journalFocusNonce = 0,
 }: CropCalendarProps) {
   const bn = language === 'bn';
+  const journalSectionRef = useRef<HTMLElement | null>(null);
   const [selectedCrop, setSelectedCrop] = useState<CropKey>('rice');
   const [plantingDate, setPlantingDate] = useState<string>('2026-11-15');
+
+  useEffect(() => {
+    const hashWantsJournal =
+      typeof window !== 'undefined' &&
+      window.location.hash.includes('farming-journal');
+    if (journalFocusNonce > 0 || hashWantsJournal) {
+      const timer = window.setTimeout(() => {
+        journalSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 60);
+      return () => window.clearTimeout(timer);
+    }
+  }, [journalFocusNonce]);
 
   const formatStageDateWindow = (dayRangeText: string) => {
     const bnToEn = (s: string) =>
@@ -621,9 +639,10 @@ export function CropCalendar({
 
         {/* FARMING JOURNAL SECTION */}
         <section
+          ref={journalSectionRef}
           id="farming-journal"
           aria-label={bn ? 'কৃষি ডায়েরি ও পর্যবেক্ষণ' : 'Farming Journal'}
-          className="bg-[var(--kb-surface)] border border-[var(--kb-border)] rounded-xl p-6 sm:p-8 space-y-6"
+          className="scroll-mt-24 bg-[var(--kb-surface)] border border-[var(--kb-border)] rounded-xl p-6 sm:p-8 space-y-6"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--kb-border-subtle)]">
             <div className="flex items-start gap-3">
