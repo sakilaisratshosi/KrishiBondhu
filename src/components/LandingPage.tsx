@@ -475,17 +475,17 @@ export function LandingPage({
                   <div className="flex items-center gap-2 text-xs font-medium text-[var(--kb-ink-muted)]">
                     <span>{bn ? 'ফিচার ০১' : 'Feature 01'}</span>
                     <span aria-hidden="true">·</span>
-                    <span>{bn ? 'নমুনা ডেমো' : 'Sample Demo'}</span>
+                    <span>{bn ? 'AI ভিশন বিশ্লেষণ' : 'Gemini Vision AI'}</span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold text-[var(--kb-ink)] group-hover:text-[var(--kb-brand-text)] transition-colors">
                     {bn
                       ? 'ফসলের রোগ শনাক্তকরণ ও দায়িত্বশীল পরামর্শ'
-                      : 'Crop Disease Inspection & Care Guide'}
+                      : 'Crop Disease Detection & Care Guide'}
                   </h3>
                   <p className="text-sm sm:text-[15px] text-[var(--kb-ink-muted)] leading-relaxed">
                     {bn
-                      ? 'নিজের তোলা পাতার ছবি আপলোড করুন অথবা প্রদত্ত নমুনা পাতা দিয়ে পরীক্ষা করুন। প্রোটোটাইপটি পূর্বনির্ধারিত নমুনা ফলাফলের মাধ্যমে লক্ষণ, কারণ ও প্রতিরোধমূলক করণীয় প্রদর্শন করে।'
-                      : 'Upload a leaf photo or test with curated sample crop images to inspect predefined symptom breakdowns, preventive care, and expert verification prompts.'}
+                      ? 'ক্যামেরায় তোলা বা গ্যালারির ফসলের ছবি পাঠিয়ে Gemini Vision AI-এর মাধ্যমে তাৎক্ষণিক ফসল শনাক্তকরণ, রোগ ও সমস্যার লক্ষণ, কারণ, করণীয় এবং প্রতিরোধের উপায় জানুন।'
+                      : 'Capture a camera photo or upload from your gallery to get real-time Gemini Vision crop identification, symptom analysis, causes, action steps, and prevention guidance.'}
                   </p>
                 </div>
                 <div>

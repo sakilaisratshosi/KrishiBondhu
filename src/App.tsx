@@ -242,6 +242,7 @@ export default function App() {
       en: '18 Nov 2026 · Sample Demo',
     },
     districtId: 'bogura',
+    analysisSource: 'history-sample',
   });
 
   useEffect(() => {
@@ -379,13 +380,10 @@ export default function App() {
       severityLabel: diagnosis.profile.severityLabel,
       imageUrl: diagnosis.previewImageUrl,
       notes: {
-        bn: diagnosis.isCustomUpload
-          ? 'আপনার আপলোডকৃত পাতার ছবির ওপর ভিত্তি করে নমুনা ডেমো প্রতিবেদন তৈরি হয়েছে।'
-          : 'নমুনা পাতার ছবির ওপর ভিত্তি করে পূর্বনির্ধারিত ডেমো প্রতিবেদন তৈরি হয়েছে।',
-        en: diagnosis.isCustomUpload
-          ? 'Generated sample demo report for user-uploaded leaf preview.'
-          : 'Generated predefined sample demo report for selected leaf preset.',
+        bn: `AI ভিশন বিশ্লেষণ (${diagnosis.profile.cropLabel.bn}): ${diagnosis.profile.diseaseName.bn}`,
+        en: `AI Vision analysis (${diagnosis.profile.cropLabel.en}): ${diagnosis.profile.diseaseName.en}`,
       },
+      diagnosisSnapshot: diagnosis,
     };
 
     setHistory((prev) => [newRecord, ...prev]);
@@ -398,7 +396,14 @@ export default function App() {
   };
 
   const handleOpenHistoryRecord = (record: HistoryRecord) => {
-    const profile = DISEASE_PROFILES[record.crop] || DISEASE_PROFILES.rice;
+    if (record.diagnosisSnapshot) {
+      setActiveDiagnosis(record.diagnosisSnapshot);
+      navigateTo('result');
+      return;
+    }
+
+    const fallbackCrop = record.crop === 'other' ? 'rice' : record.crop;
+    const profile = DISEASE_PROFILES[fallbackCrop] || DISEASE_PROFILES.rice;
     setActiveDiagnosis({
       id: record.id,
       profile,
@@ -406,6 +411,7 @@ export default function App() {
       isCustomUpload: false,
       analyzedAt: record.date,
       districtId: record.districtId,
+      analysisSource: 'history-sample',
     });
     navigateTo('result');
   };

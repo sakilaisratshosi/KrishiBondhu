@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import {
+  Activity,
   AlertTriangle,
+  Camera,
   Check,
   CheckCircle2,
   Copy,
   PhoneCall,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
   Sprout,
 } from 'lucide-react';
 import { ActiveDiagnosis, Language, PageRoute } from '../types/krishi';
@@ -29,17 +32,57 @@ export function DiseaseResult({
   diagnosis,
 }: DiseaseResultProps) {
   const bn = language === 'bn';
-  const { profile, previewImageUrl, analyzedAt, fieldObservations } = diagnosis;
+  const {
+    profile,
+    previewImageUrl,
+    analyzedAt,
+    fieldObservations,
+    analysisSource,
+    plantCondition,
+    healthStatus,
+    aiConfidencePercent,
+  } = diagnosis;
   const [copied, setCopied] = useState(false);
+
+  const isRealAi = analysisSource === 'gemini-vision';
+  const isHealthy = healthStatus === 'healthy' || profile.severity === 'low';
+  const confidenceValue =
+    typeof aiConfidencePercent === 'number'
+      ? aiConfidencePercent
+      : profile.illustrativeMatchPercent;
+
+  const conditionText = plantCondition
+    ? bn
+      ? plantCondition.bn
+      : plantCondition.en
+    : bn
+    ? profile.severity === 'high'
+      ? 'উচ্চ সতর্কতা — রোগের লক্ষণ দৃশ্যমান'
+      : 'মাঝারি সতর্কতা — পর্যবেক্ষণ প্রয়োজন'
+    : profile.severity === 'high'
+    ? 'High Attention — Disease Signs Visible'
+    : 'Moderate Watch — Monitoring Needed';
 
   const handleCopySummary = async () => {
     const summaryText = bn
-      ? `কৃষিবন্ধু নমুনা প্রতিবেদন\nফসল: ${profile.cropLabel.bn}\nসম্ভাব্য নমুনা রোগ: ${profile.diseaseName.bn}\nসতর্কতা: ${profile.severityLabel.bn}\nপ্রতিরোধ: ${profile.prevention
+      ? `কৃষিবন্ধু ${isRealAi ? 'AI বিশ্লেষণ প্রতিবেদন' : 'নমুনা প্রতিবেদন'}\n১. শনাক্তকৃত ফসল: ${profile.cropLabel.bn}\n২. গাছের বর্তমান অবস্থা: ${conditionText}\n৩. শনাক্তকৃত রোগ বা সমস্যা: ${profile.diseaseName.bn}\n৪. সমস্যার লক্ষণ: ${profile.symptoms
+          .map((s) => s.bn)
+          .join(' | ')}\n৫. সমস্যার সম্ভাব্য কারণ: ${profile.causes
+          .map((c) => c.bn)
+          .join(' | ')}\n৬. করণীয়: ${profile.responsibleTreatment
+          .map((a) => a.bn)
+          .join(' | ')}\n৭. প্রতিরোধের উপায়: ${profile.prevention
           .map((p) => p.bn)
-          .join(' | ')}\nজরুরি যাচাই: উপজেলা কৃষি অফিস বা ১৬১২৩ নম্বরে যোগাযোগ করুন।`
-      : `KrishiBondhu Sample Report\nCrop: ${profile.cropLabel.en}\nSample Disease: ${profile.diseaseName.en}\nSeverity: ${profile.severityLabel.en}\nPrevention: ${profile.prevention
+          .join(' | ')}\n৮. AI কনফিডেন্স লেভেল: ${confidenceValue}%\nযাচাই: ${profile.expertVerification.bn}`
+      : `KrishiBondhu ${isRealAi ? 'AI Analysis Report' : 'Sample Report'}\n1. Identified Crop: ${profile.cropLabel.en}\n2. Current Plant Condition: ${conditionText}\n3. Detected Disease/Problem: ${profile.diseaseName.en}\n4. Symptoms: ${profile.symptoms
+          .map((s) => s.en)
+          .join(' | ')}\n5. Possible Causes: ${profile.causes
+          .map((c) => c.en)
+          .join(' | ')}\n6. Recommended Actions: ${profile.responsibleTreatment
+          .map((a) => a.en)
+          .join(' | ')}\n7. Prevention Methods: ${profile.prevention
           .map((p) => p.en)
-          .join(' | ')}\nVerify with your Upazila Agriculture Officer or call 16123.`;
+          .join(' | ')}\n8. AI Confidence Level: ${confidenceValue}%\nVerification: ${profile.expertVerification.en}`;
 
     try {
       if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
@@ -74,12 +117,20 @@ export function DiseaseResult({
   return (
     <div className="bg-[var(--kb-canvas)] min-h-screen">
       <WorkspaceHeader
-        breadcrumbLabel={bn ? 'নমুনা রোগের ফলাফল' : 'Sample Disease Result'}
+        breadcrumbLabel={
+          isRealAi
+            ? bn
+              ? 'AI বিশ্লেষণ প্রতিবেদন'
+              : 'AI Diagnosis Report'
+            : bn
+            ? 'নমুনা রোগের ফলাফল'
+            : 'Sample Disease Result'
+        }
         title={bn ? profile.diseaseName.bn : profile.diseaseName.en}
         subtitle={
           bn
-            ? `ফসল: ${profile.cropLabel.bn} · বৈজ্ঞানিক নাম: ${profile.scientificName}`
-            : `Crop: ${profile.cropLabel.en} · Scientific Reference: ${profile.scientificName}`
+            ? `শনাক্তকৃত ফসল: ${profile.cropLabel.bn} · বৈজ্ঞানিক তথ্য: ${profile.scientificName}`
+            : `Identified Crop: ${profile.cropLabel.en} · Scientific Reference: ${profile.scientificName}`
         }
         language={language}
         onToggleLanguage={onToggleLanguage}
@@ -89,54 +140,128 @@ export function DiseaseResult({
       />
 
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Prominent Sample Demo Result Label + Quick Actions */}
-        <div className="bg-[var(--kb-warn-bg)] border border-[var(--kb-warn-border)] rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-[var(--kb-warn-icon)] shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <p className="text-sm font-bold text-[var(--kb-warn-title)]">
-                {bn
-                  ? 'নমুনা ডেমো ফলাফল — এটি প্রকৃত AI নির্ণয় নয় (Sample Demo Result — Not a real AI diagnosis)'
-                  : 'Sample Demo Result — Not a real AI diagnosis'}
-              </p>
-              <p className="text-xs sm:text-sm text-[var(--kb-warn-text)]">
-                {bn
-                  ? 'প্রদর্শনের জন্য পূর্বনির্ধারিত নমুনা রোগ, লক্ষণ, কারণ ও নিরাপদ পরিচর্যা পরামর্শ দেখানো হচ্ছে।'
-                  : 'Displaying predefined sample disease data, symptoms, causes, and safe guidance for prototype demonstration.'}
-              </p>
+        {/* Top Status Banner + Quick Actions */}
+        {isRealAi ? (
+          <div
+            className={`rounded-xl border p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+              isHealthy
+                ? 'bg-[var(--kb-surface-sage)] border-[var(--kb-accent)]/50'
+                : 'bg-[var(--kb-warn-bg)] border-[var(--kb-warn-border)]'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              {isHealthy ? (
+                <CheckCircle2 className="w-5 h-5 text-[var(--kb-accent)] shrink-0 mt-0.5" />
+              ) : (
+                <Sparkles className="w-5 h-5 text-[var(--kb-warn-icon)] shrink-0 mt-0.5" />
+              )}
+              <div className="space-y-0.5">
+                <p
+                  className={`text-sm font-bold ${
+                    isHealthy
+                      ? 'text-[var(--kb-brand-text)]'
+                      : 'text-[var(--kb-warn-title)]'
+                  }`}
+                >
+                  {isHealthy
+                    ? bn
+                      ? 'AI বিশ্লেষণ সম্পন্ন — গাছটি সুস্থ ও স্বাভাবিক দেখা যাচ্ছে'
+                      : 'Gemini Vision Analysis Complete — Plant Appears Healthy'
+                    : bn
+                    ? 'Gemini Vision AI দিয়ে ছবির প্রকৃত বিশ্লেষণ সম্পন্ন হয়েছে'
+                    : 'Real-Time Gemini Vision Image Analysis Complete'}
+                </p>
+                <p
+                  className={`text-xs sm:text-sm ${
+                    isHealthy
+                      ? 'text-[var(--kb-ink-muted)]'
+                      : 'text-[var(--kb-warn-text)]'
+                  }`}
+                >
+                  {bn
+                    ? 'প্রদর্শিত ফসল ও রোগের প্রতিবেদনটি সরাসরি আপনার আপলোড বা ক্যামেরায় তোলা ছবির পিক্সেল পরীক্ষা করে তৈরি করা হয়েছে।'
+                    : 'This report was generated strictly from the visual pixels of your captured or uploaded crop image.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={handleCopySummary}
+                className="inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 text-xs font-semibold text-[var(--kb-brand-text)] bg-[var(--kb-surface)] hover:bg-[var(--kb-surface-sage)] border border-[var(--kb-border)] rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-[var(--kb-accent)]" />
+                    <span>{bn ? 'কপি হয়েছে' : 'Copied'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>{bn ? 'রিপোর্ট কপি করুন' : 'Copy Report'}</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('detect')}
+                className="inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-[var(--kb-brand)] hover:bg-[var(--kb-brand-hover)] rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>{bn ? 'নতুন ছবি তুলুন / পরীক্ষা করুন' : 'Analyze Another Photo'}</span>
+              </button>
             </div>
           </div>
+        ) : (
+          <div className="bg-[var(--kb-warn-bg)] border border-[var(--kb-warn-border)] rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-[var(--kb-warn-icon)] shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="text-sm font-bold text-[var(--kb-warn-title)]">
+                  {bn
+                    ? 'পূর্বের নমুনা রেকর্ড — নতুন ছবি দিয়ে প্রকৃত AI পরীক্ষা করুন'
+                    : 'Historical Sample Record — Upload a Photo for Live AI Analysis'}
+                </p>
+                <p className="text-xs sm:text-sm text-[var(--kb-warn-text)]">
+                  {bn
+                    ? 'এটি পূর্বসংরক্ষিত একটি উদাহরণ প্রতিবেদন। আপনার নিজের ফসলের ছবি বিশ্লেষণ করতে নতুন ছবি তুলুন বা আপলোড করুন।'
+                    : 'Viewing a saved reference sample record. Capture or upload your own crop photo for live Gemini Vision analysis.'}
+                </p>
+              </div>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <button
-              type="button"
-              onClick={handleCopySummary}
-              className="inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 text-xs font-semibold text-[var(--kb-brand-text)] bg-[var(--kb-surface)] hover:bg-[var(--kb-surface-sage)] border border-[var(--kb-border)] rounded-lg transition-colors whitespace-nowrap cursor-pointer"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-[var(--kb-accent)]" />
-                  <span>{bn ? 'কপি হয়েছে' : 'Copied'}</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>{bn ? 'পরামর্শ কপি করুন' : 'Copy Advice'}</span>
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigate('detect')}
-              className="inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-[var(--kb-brand)] hover:bg-[var(--kb-brand-hover)] rounded-lg transition-colors whitespace-nowrap cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>{bn ? 'আরেকটি পাতা দেখুন' : 'Test Another Image'}</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={handleCopySummary}
+                className="inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 text-xs font-semibold text-[var(--kb-brand-text)] bg-[var(--kb-surface)] hover:bg-[var(--kb-surface-sage)] border border-[var(--kb-border)] rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-[var(--kb-accent)]" />
+                    <span>{bn ? 'কপি হয়েছে' : 'Copied'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>{bn ? 'পরামর্শ কপি করুন' : 'Copy Advice'}</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('detect')}
+                className="inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-[var(--kb-brand)] hover:bg-[var(--kb-brand-hover)] rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{bn ? 'নতুন ছবি বিশ্লেষণ করুন' : 'Scan Real Photo'}</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Top Summary Split: Image Preview + Core Profile */}
+        {/* Top Summary Split: Image Preview + Core Report Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           <div className="lg:col-span-5 bg-[var(--kb-surface)] border border-[var(--kb-border)] rounded-xl p-5 flex flex-col justify-between gap-4">
             <div className="aspect-[4/3] rounded-lg overflow-hidden border border-[var(--kb-border)]">
@@ -147,7 +272,7 @@ export function DiseaseResult({
               />
             </div>
             <div className="flex items-center justify-between text-xs text-[var(--kb-ink-muted)] pt-2 border-t border-[var(--kb-border-subtle)]">
-              <span>{bn ? 'পর্যালোচনার সময়:' : 'Reviewed:'}</span>
+              <span>{bn ? 'পর্যালোচনার সময়:' : 'Analyzed:'}</span>
               <span className="font-medium text-[var(--kb-ink)] tabular-nums">
                 {bn ? analyzedAt.bn : analyzedAt.en}
               </span>
@@ -155,27 +280,49 @@ export function DiseaseResult({
           </div>
 
           <div className="lg:col-span-7 bg-[var(--kb-surface)] border border-[var(--kb-border)] rounded-xl p-6 sm:p-8 flex flex-col justify-between gap-6">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[var(--kb-border-subtle)]">
-                <div className="flex items-center gap-2 text-xs text-[var(--kb-ink-muted)]">
-                  <span className="font-semibold text-[var(--kb-ink)]">
+            <div className="space-y-5">
+              {/* Structured Required Metadata Cards (Crop, Condition, Detected Problem) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3.5 rounded-lg bg-[var(--kb-surface-muted)] border border-[var(--kb-border-subtle)] space-y-1">
+                  <p className="text-[11px] font-semibold text-[var(--kb-ink-muted)]">
+                    {bn ? 'শনাক্তকৃত ফসল' : 'Identified Crop'}
+                  </p>
+                  <p className="text-sm font-bold text-[var(--kb-ink)]">
                     {bn ? profile.cropLabel.bn : profile.cropLabel.en}
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span className="italic">{profile.scientificName}</span>
+                  </p>
+                  <p className="text-[11px] italic text-[var(--kb-ink-muted)] truncate">
+                    {profile.scientificName}
+                  </p>
                 </div>
-                <span
-                  className={`inline-flex items-center gap-1.5 text-xs font-bold ${
-                    profile.severity === 'high'
-                      ? 'text-[var(--kb-danger-text)]'
-                      : 'text-[var(--kb-amber)]'
-                  }`}
-                >
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>
+
+                <div className="p-3.5 rounded-lg bg-[var(--kb-surface-muted)] border border-[var(--kb-border-subtle)] space-y-1">
+                  <p className="text-[11px] font-semibold text-[var(--kb-ink-muted)]">
+                    {bn ? 'গাছের বর্তমান অবস্থা' : 'Current Plant Condition'}
+                  </p>
+                  <p
+                    className={`text-sm font-bold ${
+                      isHealthy
+                        ? 'text-[var(--kb-accent)]'
+                        : profile.severity === 'high'
+                        ? 'text-[var(--kb-danger-text)]'
+                        : 'text-[var(--kb-amber)]'
+                    }`}
+                  >
+                    {conditionText}
+                  </p>
+                  <p className="text-[11px] text-[var(--kb-ink-muted)]">
                     {bn ? profile.severityLabel.bn : profile.severityLabel.en}
-                  </span>
-                </span>
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-lg bg-[var(--kb-surface-muted)] border border-[var(--kb-border-subtle)] space-y-1">
+                  <p className="text-[11px] font-semibold text-[var(--kb-ink-muted)]">
+                    {bn ? 'শনাক্তকৃত রোগ বা সমস্যা' : 'Detected Disease / Issue'}
+                  </p>
+                  <p className="text-sm font-bold text-[var(--kb-ink)]">
+                    {bn ? profile.diseaseName.bn : profile.diseaseName.en}
+                  </p>
+                </div>
               </div>
 
               <p className="text-[15px] sm:text-base text-[var(--kb-ink)] leading-relaxed">
@@ -201,28 +348,39 @@ export function DiseaseResult({
                 </div>
               )}
 
-              {/* Illustrative Confidence Bar (Clearly Labeled Static Demo) */}
+              {/* AI Confidence Level Indicator */}
               <div className="p-4 bg-[var(--kb-surface-muted)] rounded-lg border border-[var(--kb-border-subtle)] space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <span className="font-semibold text-[var(--kb-ink)]">
-                    {bn
-                      ? 'দৃষ্টান্তমূলক মিলের হার (Illustrative Demo Data Only)'
-                      : 'Illustrative Match Indicator (Static Demo Data Only)'}
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-[var(--kb-ink)]">
+                    <Activity className="w-3.5 h-3.5 text-[var(--kb-accent)]" />
+                    <span>
+                      {isRealAi
+                        ? bn
+                          ? 'AI কনফিডেন্স লেভেল (AI Confidence Level)'
+                          : 'AI Confidence Level'
+                        : bn
+                        ? 'দৃষ্টান্তমূলক মিলের হার (নমুনা ডেটা)'
+                        : 'Illustrative Match Indicator (Sample Data)'}
+                    </span>
                   </span>
                   <span className="font-mono font-bold text-[var(--kb-brand-text)] tabular-nums">
-                    {profile.illustrativeMatchPercent}% ({bn ? 'নমুনা মান' : 'Sample'})
+                    {confidenceValue}%
                   </span>
                 </div>
-                <div className="w-full h-2 bg-[var(--kb-surface-sage-strong)] rounded-full overflow-hidden">
+                <div className="w-full h-2.5 bg-[var(--kb-surface-sage-strong)] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[var(--kb-accent)] rounded-full"
-                    style={{ width: `${profile.illustrativeMatchPercent}%` }}
+                    className="h-full bg-[var(--kb-accent)] rounded-full transition-all duration-300"
+                    style={{ width: `${Math.max(0, Math.min(100, confidenceValue))}%` }}
                   />
                 </div>
                 <p className="text-xs text-[var(--kb-ink-muted)]">
-                  {bn
-                    ? 'সতর্কতা: এই শতকরা হার কোনো কৃত্রিম বুদ্ধিমত্তা বা ল্যাবরেটরি পরীক্ষার নির্ভুলতা নির্দেশ করে না।'
-                    : 'Disclaimer: This illustrative value is static prototype data and does not represent real AI accuracy or lab verification.'}
+                  {isRealAi
+                    ? bn
+                      ? 'ছবির আলোর মান, পাতার স্পষ্টতা এবং দৃশ্যমান লক্ষণের ভিত্তিতে AI এই কনফিডেন্স লেভেল নির্ধারণ করেছে।'
+                      : 'Reflects Gemini Vision visual confidence based on image clarity, lighting, and visible plant traits.'
+                    : bn
+                    ? 'সতর্কতা: এই নমুনা মানটি পূর্বের উদাহরণ রেকর্ডের অংশ।'
+                    : 'Note: This value comes from a static historical sample record.'}
                 </p>
               </div>
             </div>
@@ -233,8 +391,8 @@ export function DiseaseResult({
               <div className="space-y-1">
                 <h2 className="text-sm font-bold text-white">
                   {bn
-                    ? 'কৃষি বিশেষজ্ঞের মাধ্যমে যাচাই আবশ্যক'
-                    : 'Agricultural Expert Verification Recommended'}
+                    ? 'কৃষি বিশেষজ্ঞের মাধ্যমে যাচাই ও নিরাপদ পরামর্শ'
+                    : 'Agricultural Expert Guidance'}
                 </h2>
                 <p className="text-xs sm:text-sm text-[#D1E2D7] leading-relaxed">
                   {bn ? profile.expertVerification.bn : profile.expertVerification.en}
@@ -244,22 +402,19 @@ export function DiseaseResult({
           </div>
         </div>
 
-        {/* 4-Card Guidance Grid */}
+        {/* 4-Card Report Detail Grid: Symptoms, Possible Causes, Recommended Actions, Prevention */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Symptoms */}
+          {/* সমস্যার লক্ষণ (Symptoms) */}
           <section className="bg-[var(--kb-surface)] border border-[var(--kb-border)] rounded-xl p-6 space-y-4">
             <div className="flex items-center gap-2 text-[var(--kb-brand-text)] pb-3 border-b border-[var(--kb-border-subtle)]">
               <Sprout className="w-5 h-5" />
               <h2 className="text-lg font-bold text-[var(--kb-ink)]">
-                {bn ? 'প্রধান লক্ষণসমূহ' : 'Observable Symptoms'}
+                {bn ? 'সমস্যার লক্ষণ' : 'Observable Symptoms'}
               </h2>
             </div>
             <ul className="space-y-3 text-sm sm:text-[15px] text-[var(--kb-ink-muted)]">
               {profile.symptoms.map((item, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-start gap-2.5 leading-relaxed"
-                >
+                <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
                   <span className="font-mono text-xs font-semibold text-[var(--kb-accent)] mt-1 tabular-nums">
                     0{idx + 1}.
                   </span>
@@ -269,20 +424,17 @@ export function DiseaseResult({
             </ul>
           </section>
 
-          {/* Possible Causes */}
+          {/* সমস্যার সম্ভাব্য কারণ (Possible Causes) */}
           <section className="bg-[var(--kb-surface)] border border-[var(--kb-border)] rounded-xl p-6 space-y-4">
             <div className="flex items-center gap-2 text-[var(--kb-amber)] pb-3 border-b border-[var(--kb-border-subtle)]">
               <AlertTriangle className="w-5 h-5" />
               <h2 className="text-lg font-bold text-[var(--kb-ink)]">
-                {bn ? 'সম্ভাব্য কারণসমূহ' : 'Possible Contributing Causes'}
+                {bn ? 'সমস্যার সম্ভাব্য কারণ' : 'Possible Causes'}
               </h2>
             </div>
             <ul className="space-y-3 text-sm sm:text-[15px] text-[var(--kb-ink-muted)]">
               {profile.causes.map((item, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-start gap-2.5 leading-relaxed"
-                >
+                <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
                   <span className="font-mono text-xs font-semibold text-[var(--kb-amber)] mt-1 tabular-nums">
                     0{idx + 1}.
                   </span>
@@ -292,44 +444,36 @@ export function DiseaseResult({
             </ul>
           </section>
 
-          {/* Prevention Guidance */}
+          {/* করণীয় (Recommended Actions) */}
           <section className="bg-[var(--kb-surface)] border border-[var(--kb-border)] rounded-xl p-6 space-y-4">
-            <div className="flex items-center gap-2 text-[var(--kb-accent)] pb-3 border-b border-[var(--kb-border-subtle)]">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="flex items-center gap-2 text-[var(--kb-brand-text)] pb-3 border-b border-[var(--kb-border-subtle)]">
+              <CheckCircle2 className="w-5 h-5" />
               <h2 className="text-lg font-bold text-[var(--kb-ink)]">
-                {bn ? 'প্রতিরোধমূলক ব্যবস্থা' : 'Prevention Guidance'}
+                {bn ? 'করণীয়' : 'Recommended Actions'}
               </h2>
             </div>
             <ul className="space-y-3 text-sm sm:text-[15px] text-[var(--kb-ink-muted)]">
-              {profile.prevention.map((item, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-start gap-2.5 leading-relaxed"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-[var(--kb-accent)] shrink-0 mt-1" />
+              {profile.responsibleTreatment.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--kb-brand-text)] shrink-0 mt-1" />
                   <span>{bn ? item.bn : item.en}</span>
                 </li>
               ))}
             </ul>
           </section>
 
-          {/* Responsible Treatment Guidance */}
+          {/* প্রতিরোধের উপায় (Prevention Methods) */}
           <section className="bg-[var(--kb-surface)] border border-[var(--kb-border)] rounded-xl p-6 space-y-4">
-            <div className="flex items-center gap-2 text-[var(--kb-brand-text)] pb-3 border-b border-[var(--kb-border-subtle)]">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="flex items-center gap-2 text-[var(--kb-accent)] pb-3 border-b border-[var(--kb-border-subtle)]">
+              <ShieldCheck className="w-5 h-5" />
               <h2 className="text-lg font-bold text-[var(--kb-ink)]">
-                {bn
-                  ? 'দায়িত্বশীল পরিচর্যা ও পরামর্শ'
-                  : 'Responsible Care & Treatment Guidance'}
+                {bn ? 'প্রতিরোধের উপায়' : 'Prevention Methods'}
               </h2>
             </div>
             <ul className="space-y-3 text-sm sm:text-[15px] text-[var(--kb-ink-muted)]">
-              {profile.responsibleTreatment.map((item, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-start gap-2.5 leading-relaxed"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-[var(--kb-brand-text)] shrink-0 mt-1" />
+              {profile.prevention.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--kb-accent)] shrink-0 mt-1" />
                   <span>{bn ? item.bn : item.en}</span>
                 </li>
               ))}
@@ -342,13 +486,20 @@ export function DiseaseResult({
         <SourceQualityNotice
           language={language}
           verifiedSource={{
-            bn: 'BRRI, BARI এবং কৃষি সম্প্রসারণ অধিদপ্তরের (DAE) রোগ শনাক্তকরণ ও সমন্বিত বালাই ব্যবস্থাপনা (IPM) নির্দেশিকা।',
-            en: 'General symptom descriptions and preventive IPM hygiene modeled on BRRI, BARI, and DAE field handbooks.',
+            bn: 'Google Gemini Vision AI ভিজ্যুয়াল বিশ্লেষণ এবং কৃষি সম্প্রসারণ অধিদপ্তর (DAE), BRRI ও BARI-এর সমন্বিত বালাই ব্যবস্থাপনা (IPM) নীতিমালা।',
+            en: 'Visual inspection powered by Google Gemini Vision AI alongside DAE, BRRI, and BARI Integrated Pest Management (IPM) stewardship practices.',
           }}
-          demoScope={{
-            bn: 'প্রদর্শিত রোগ নির্ণয় ও দৃষ্টান্তমূলক মিলের হার সম্পূর্ণ স্থির ডেমো ডেটা—এটি কোনো AI মডেল বা ল্যাবরেটরি পরীক্ষা নয়।',
-            en: 'Displayed disease selection and illustrative match percentage are static demo outputs, not real AI vision or laboratory tests.',
-          }}
+          demoScope={
+            isRealAi
+              ? {
+                  bn: 'মাঠের চূড়ান্ত চিকিৎসা বা বালাইনাশক স্প্রে করার আগে আপনার এলাকার উপ-সহকারী কৃষি কর্মকর্তা অথবা ১৬১২৩ হেল্পলাইনে পরামর্শ যাচাই করা নিরাপদ।',
+                  en: 'Always verify chemical dosages or field treatments with your local Sub-Assistant Agriculture Officer or Bangladesh Agriculture Helpline 16123.',
+                }
+              : {
+                  bn: 'এটি পূর্বসংরক্ষিত একটি নমুনা রেকর্ড—নতুন ছবি তুলে প্রকৃত AI বিশ্লেষণ দেখুন।',
+                  en: 'This view shows a saved historical sample record—capture or upload a photo for live Gemini Vision analysis.',
+                }
+          }
         />
 
         {/* Bottom Navigation Actions */}

@@ -29,7 +29,14 @@ export type ProfileSectionTarget =
 
 export type CropKey = 'rice' | 'tomato' | 'potato' | 'eggplant';
 
-export type SeverityLevel = 'moderate' | 'high';
+export type SeverityLevel = 'low' | 'moderate' | 'high';
+
+export type PlantHealthStatus =
+  | 'healthy'
+  | 'diseased'
+  | 'pest'
+  | 'nutrient_deficiency'
+  | 'abiotic_stress';
 
 export interface BilingualText {
   bn: string;
@@ -38,7 +45,7 @@ export interface BilingualText {
 
 export interface DiseaseProfile {
   id: string;
-  crop: CropKey;
+  crop: CropKey | 'other';
   cropLabel: BilingualText;
   diseaseName: BilingualText;
   scientificName: string;
@@ -63,6 +70,10 @@ export interface ActiveDiagnosis {
   fieldObservations?: BilingualText[];
   analyzedAt: BilingualText;
   districtId: string;
+  analysisSource?: 'gemini-vision' | 'history-sample';
+  plantCondition?: BilingualText;
+  healthStatus?: PlantHealthStatus;
+  aiConfidencePercent?: number;
 }
 
 export interface WeatherForecastDay {
@@ -104,7 +115,7 @@ export interface HistoryRecord {
   isoDate: string;
   districtId: string;
   districtName: BilingualText;
-  crop: CropKey;
+  crop: CropKey | 'other';
   cropLabel: BilingualText;
   profileId: string;
   diseaseName: BilingualText;
@@ -112,6 +123,7 @@ export interface HistoryRecord {
   severityLabel: BilingualText;
   imageUrl: string;
   notes: BilingualText;
+  diagnosisSnapshot?: ActiveDiagnosis;
 }
 
 export interface ChatMessage {

@@ -28,7 +28,7 @@ export function DiseaseHistory({
 }: DiseaseHistoryProps) {
   const bn = language === 'bn';
   const [searchQuery, setSearchQuery] = useState('');
-  const [cropFilter, setCropFilter] = useState<'all' | CropKey>('all');
+  const [cropFilter, setCropFilter] = useState<'all' | CropKey | 'other'>('all');
   const [severityFilter, setSeverityFilter] = useState<'all' | SeverityLevel>(
     'all'
   );
@@ -142,6 +142,17 @@ export function DiseaseHistory({
                     {bn ? crop.label.bn : crop.label.en}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setCropFilter('other')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+                    cropFilter === 'other'
+                      ? 'bg-[var(--kb-surface)] text-[var(--kb-brand-text)] shadow-xs'
+                      : 'text-[var(--kb-ink-muted)] hover:text-[var(--kb-ink)]'
+                  }`}
+                >
+                  {bn ? 'অন্যান্য ফসল' : 'Other Crops'}
+                </button>
               </div>
 
               <div className="flex items-center gap-2">
@@ -164,6 +175,9 @@ export function DiseaseHistory({
                   </option>
                   <option value="moderate">
                     {bn ? 'মাঝারি সতর্কতা' : 'Moderate Watch'}
+                  </option>
+                  <option value="low">
+                    {bn ? 'স্বাভাবিক / সুস্থ' : 'Healthy / Low Risk'}
                   </option>
                 </select>
               </div>
@@ -257,6 +271,8 @@ export function DiseaseHistory({
                     className={`text-xs font-bold ${
                       record.severity === 'high'
                         ? 'text-[var(--kb-danger-text)]'
+                        : record.severity === 'low'
+                        ? 'text-[var(--kb-accent)]'
                         : 'text-[var(--kb-amber)]'
                     }`}
                   >

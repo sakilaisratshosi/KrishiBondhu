@@ -806,6 +806,8 @@ export function FarmerDashboard({
                         className={`text-xs font-medium ${
                           record.severity === 'high'
                             ? 'text-[var(--kb-danger-text)]'
+                            : record.severity === 'low'
+                            ? 'text-[var(--kb-accent)]'
                             : 'text-[var(--kb-amber)]'
                         }`}
                       >
